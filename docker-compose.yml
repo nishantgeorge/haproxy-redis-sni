@@ -1,0 +1,40 @@
+version: "3.4"
+
+services:
+
+  haproxy:
+    image: haproxy
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    networks:
+      testing_net:
+        ipv4_address: 172.28.1.1
+
+  redis-1:
+    build: ./redis-ssl
+    networks:
+      testing_net:
+        ipv4_address: 172.28.1.4
+  
+  redis-2:
+    build: ./redis-ssl
+    networks:
+      testing_net:
+        ipv4_address: 172.28.1.5
+    
+  client:
+    image: python:3.6
+    command: bash -c "pip install redis && while true; do sleep 60; done"
+    links:
+      - haproxy:redis-1.acme.com
+      - haproxy:redis-2.acme.com
+    networks:
+      testing_net:
+        ipv4_address: 172.28.1.3
+
+networks:
+  testing_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
